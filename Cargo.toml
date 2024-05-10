@@ -1,0 +1,14 @@
+[package]
+name = "meal"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7.4"
+chrono = "0.4.38"
+serde = { version = "1.0.188", features = ["derive"] }
+shuttle-axum = "0.44.0"
+shuttle-runtime = "0.44.0"
+shuttle-shared-db = { version = "0.44.0", features = ["postgres", "sqlx"] }
+sqlx = { version = "0.7.1", features = ["postgres", "chrono"] }
+tokio = "1.28.2"

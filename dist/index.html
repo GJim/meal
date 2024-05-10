@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Meal App</title>
+    </head>
+    <body>
+        <select id="page-select">
+            <option value="order">Order</option>
+            <option value="product">Product</option>
+            <option value="label">Label</option>
+            <option value="ingredient">Ingredient</option>
+            <option value="market">Market</option>
+        </select>
+        <div id="order-page">
+            <form id="order-form">
+                <div id="order-summary"></div>
+                <button type="submit">Submit</button>
+            </form>
+            <div id="order-buttons"></div>
+        </div>
+        <div id="product-page" hidden="true">
+            <form id="product-form">
+                <input type="text" id="product-name" placeholder="Product Name">
+                <input type="number" id="product-price" placeholder="Product Price">
+                <button type="submit">Add</button>
+            </form>
+            <div id="product-list"></div>
+        </div>
+        <div id="label-page" hidden="true">
+            <form id="label-form">
+                <input type="text" id="label-name" placeholder="Label Name">
+                <input type="datetime-local" id="label-initial" placeholder="Label Start Time">
+                <input type="datetime-local" id="label-finish" placeholder="Label End Time">
+                <button type="submit">Add</button>
+            </form>
+            <div id="label-list"></div>
+        </div>
+        <div id="ingredient-page" hidden="true">
+            <form id="ingredient-form">
+                <input type="text" id="ingredient-name" placeholder="Ingredient Name">
+                <select id="ingredient-product"></select>
+                <input type="number" id="ingredient-quantity" step="0.01" placeholder="Ingredient Quantity">
+                <input type="text" id="ingredient-unit" placeholder="Ingredient Unit">
+                <button type="submit">Add</button>
+            </form>
+            <div id="ingredient-list"></div>
+        </div>
+        <div id="market-page" hidden="true">
+            <form id="market-form">
+                <input type="datetime-local" id="market-start" placeholder="Market Start Time">
+                <input type="datetime-local" id="market-end" placeholder="Market End Time">
+                <button type="submit">Search</button>
+            </form>
+            <div id="market-list"></div>
+        </div>
+    </body>
+    <script>
+        const timeOffset = 8 * 60 * 60 * 1000;
+        let state = {
+            page: "order",
+            products: [],
+            pnmap: {},
+            labels: [],
+            ingredients: [],
+            orders: {}
+        };
+        (() => {
+            /* Initialize state */
+            (async() => {
+                // get state from server
+                state['products'] = await (await fetch("/product/all")).json();
+                state['labels'] = await (await fetch("/label/all")).json();
+                state['labels'] = applyLocalTime(applyLocalTime(state['labels'], 'initial'), 'finish');
+                state['ingredients'] = await (await fetch("/ingredient/all")).json();
+                state['pmap'] = state['products'].reduce((m, p) => {
+                    return {...m, [p.no]: p};
+                }, {});
+
+                // render tables
+                renderTable(state['products'], "product-list");
+                renderTable(state['labels'], "label-list");
+                renderTable(applyMap(state['ingredients'], state['pmap'], 'product', 'name'), "ingredient-list");
+
+                // set element default value
+                document.getElementById("order-buttons").innerHTML = state['products'].map(p => `<div><div>${p.name}</div><button class="product-increment" data-product="${p.no}">+</button><button class="product-decrement" data-product="${p.no}">-</button></div>`).join('');
+                const now = new Date(new Date().getTime() + timeOffset);
+                document.getElementById("label-initial").value = now.toISOString().slice(0, 16);
+                let tomorrow = new Date();
+                tomorrow.setDate(now.getDate() + 1);
+                document.getElementById("label-finish").value = tomorrow.toISOString().slice(0, 16);
+                document.getElementById("ingredient-product").innerHTML = state['products'].map(p => `<option value="${p.no}">${p.name}</option>`).join('');
+                bindOrderButtonEvents();
+            })();
+            
+            /* Global functions */
+            function applyMap(list, map, src, dst) {
+                return list.map(p => {
+                    return {...p, [src]: map[p[src]][dst]};
+                });
+            }
+
+            function applyLocalTime(list, column) {
+                return list.map(p => {
+                    return {...p, [column]: new Date(new Date(p[column]+'.000Z').getTime() + timeOffset).toISOString().slice(0, 19).replace("T", " ")};
+                });
+            }
+
+            function renderTable(data, targetElementId) {
+                // If the array is empty, return an empty table element
+                if (data.length === 0) {
+                    document.getElementById(targetElementId).innerHTML = "";
+                    return;
+                }
+
+                // Extract keys from the first item of the array
+                let keys = Object.keys(data[0]);
+
+                // Create table element
+                let table = document.createElement("table");
+
+                // Create table header row
+                let headerRow = document.createElement("tr");
+                keys.forEach(function(key) {
+                    let th = document.createElement("th");
+                    th.textContent = key;
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+
+                // Create table rows with data
+                data.forEach(function(item) {
+                    let row = document.createElement("tr");
+                    keys.forEach(function(key) {
+                        let td = document.createElement("td");
+                        td.textContent = item[key];
+                        row.appendChild(td);
+                    });
+                    table.appendChild(row);
+                });
+
+                // Inject the table into the target element
+                document.getElementById(targetElementId).innerHTML = "";
+                document.getElementById(targetElementId).appendChild(table);
+            }
+
+            /* Pages to display */
+            let selectElement = document.getElementById("page-select");
+            const pages = {
+                "order": document.getElementById("order-page"),
+                "product": document.getElementById("product-page"),
+                "label": document.getElementById("label-page"),
+                "ingredient": document.getElementById("ingredient-page"),
+                "market": document.getElementById("market-page")
+            };
+
+            selectElement.addEventListener("change", function() {
+                let selectedValue = this.value;
+                for (let page in pages) {
+                    if (page === selectedValue) {
+                        pages[page].removeAttribute("hidden");
+                    } else {
+                        pages[page].setAttribute("hidden", true);
+                    }
+                }
+            });
+
+            /* Order Management*/
+            function summaryOrder(orders) {
+                return Object.keys(orders).map(k => `${state['pmap'][k]['name']} x${orders[k]}`).join(', ');
+            }
+            function incrementProduct(productNo) {
+                state['orders'][productNo] = (state['orders'][productNo] || 0) + 1;
+                document.getElementById("order-summary").innerText = summaryOrder(state['orders']);
+            }
+            
+            function decrementProduct(productNo) {
+                state['orders'][productNo] = Math.max(0, (state['orders'][productNo] || 0) - 1);
+                if (state['orders'][productNo] === 0) {
+                    delete state['orders'][productNo];
+                }
+                document.getElementById("order-summary").innerText = summaryOrder(state['orders']);
+            }
+
+            function bindOrderButtonEvents() {
+                document.querySelectorAll('.product-increment').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productNo = this.getAttribute('data-product');
+                        incrementProduct(productNo);
+                        console.log(`+ ${productNo}`)
+                    });
+                });
+                document.querySelectorAll('.product-decrement').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productNo = this.getAttribute('data-product');
+                        decrementProduct(productNo);
+                        console.log(`- ${productNo}`)
+                    });
+                });
+            }
+
+            function getCurrentLabels() {
+                const now = new Date().getTime();
+                return state['labels'].filter(l => 
+                    new Date(l['initial']).getTime() <= now 
+                    && new Date(l['finish']).getTime() >= now
+                ).map(l => l['name']).join(',');
+            }
+
+            async function submitOrder(product, quantity, price, labels) {
+                let response = await fetch("/order/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        product, quantity, price, labels
+                    })
+                });
+            }
+
+            document.getElementById("order-form").addEventListener("submit", async function(event) {
+                event.preventDefault();
+                const labels = getCurrentLabels();
+                const promises = Object.keys(state['orders']).map(k => {
+                    const quantity = state['orders'][k];
+                    const price = state['pmap'][k]['price'];
+                    return submitOrder(parseInt(k), quantity, quantity * price, labels);
+                });
+                await Promise.all(promises);
+                // update state
+                document.getElementById("order-summary").innerText = "";
+                state['orders'] = {};
+            });
+
+            /* Product Management*/
+            document.getElementById("product-form").addEventListener("submit", async function(event) {
+                event.preventDefault();
+                let name = document.getElementById("product-name").value;
+                let price = parseInt(document.getElementById("product-price").value);
+                let response = await fetch("/product/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ name, price })
+                });
+                let {no} = await response.json();
+                state['products'].push({no, name, price});
+                renderTable(state['products'], "product-list");
+                // update elements state
+                document.getElementById("product-name").value = "";
+                document.getElementById("product-price").value = "";
+                document.getElementById("order-buttons").innerHTML = state['products'].map(p => `<div><div>${p.name}</div><button class="product-increment" data-product="${p.no}">+</button><button class="product-decrement" data-product="${p.no}">-</button></div>`).join('');
+                document.getElementById("ingredient-product").innerHTML = state['products'].map(p => `<option value="${p.no}">${p.name}</option>`).join('');
+                state['pmap'] = state['products'].reduce((m, p) => {
+                    return {...m, [p.no]: p};
+                }, {});
+                bindOrderButtonEvents();
+            });
+
+            /* Label Management*/
+            document.getElementById("label-form").addEventListener("submit", async function(event) {
+                event.preventDefault();
+                let name = document.getElementById("label-name").value;
+                let initial = document.getElementById("label-initial").value;
+                let finish = document.getElementById("label-finish").value;
+                initial = new Date(initial);
+                const initialUTC = initial.toISOString().slice(0, 19).replace("T", " ");
+                initial = new Date(initial.getTime() + timeOffset).toISOString().slice(0, 19).replace("T", " ");
+                finish = new Date(finish);
+                const finishUTC = finish.toISOString().slice(0, 19).replace("T", " ");
+                finish = new Date(finish.getTime() + timeOffset).toISOString().slice(0, 19).replace("T", " ");
+                
+                let response = await fetch("/label/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ name, initial: initialUTC, finish: finishUTC })
+                });
+                let {no} = await response.json();
+                state['labels'].push({no, name, initial, finish});
+                renderTable(state['labels'], "label-list");
+                // update elements state
+                document.getElementById("label-name").value = "";
+            });
+            
+            /* Ingredient Management*/
+            document.getElementById("ingredient-form").addEventListener("submit", async function(event) {
+                event.preventDefault();
+                let name = document.getElementById("ingredient-name").value;
+                let product = parseInt(document.getElementById("ingredient-product").value);
+                let quantity = parseFloat(document.getElementById("ingredient-quantity").value);
+                let unit = document.getElementById("ingredient-unit").value;
+                let response = await fetch("/ingredient/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ name, product, quantity, unit })
+                });
+                let {no} = await response.json();
+                state['ingredients'].push({no, name, product, quantity, unit});
+                renderTable(applyMap(state['ingredients'], state['pmap'], 'product', 'name'), "ingredient-list");
+                // update elements state
+                document.getElementById("ingredient-name").value = "";
+                document.getElementById("ingredient-quantity").value = "";
+                document.getElementById("ingredient-unit").value = "";
+            });
+
+            /* Market Management */
+            document.getElementById("market-form").addEventListener("submit", async function(event) {
+                event.preventDefault();
+                // clear list
+                document.getElementById("market-list").innerHTML = "";
+                let start = document.getElementById("market-start").value;
+                let end = document.getElementById("market-end").value;
+                start = new Date(start).toISOString().slice(0, 19).replace("T", " ");
+                end = new Date(end).toISOString().slice(0, 19).replace("T", " ");
+
+                // let params = {start, end};
+                // params = Object.keys(params)
+                //     .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key])).join('&');
+                
+                let response = await fetch(`/order/range`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ start, end })
+                });
+                let result = await response.json();
+                result = result.reduce((o, order) => {
+                    const { product, quantity, price } = order;
+                    if (!o[product]) {
+                        o[product] = { quantity: 0, price: 0 };
+                    }
+                    o[product].quantity += quantity;
+                    o[product].price += price;
+                    return o;
+                }, {});
+                result = Object.entries(result).map(([k, v]) => {
+                    return {product: state['pmap'][k]['name'], ...v};
+                })
+                renderTable(result, "market-list");
+            });
+        })();
+    </script>
+</html>
