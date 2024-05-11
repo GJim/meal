@@ -319,10 +319,6 @@
                 start = new Date(start).toISOString().slice(0, 19).replace("T", " ");
                 end = new Date(end).toISOString().slice(0, 19).replace("T", " ");
 
-                // let params = {start, end};
-                // params = Object.keys(params)
-                //     .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key])).join('&');
-                
                 let response = await fetch(`/order/range`, {
                     method: "POST",
                     headers: {

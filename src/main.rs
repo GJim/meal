@@ -5,6 +5,8 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use axum::http::Method;
+use tower_http::cors::{CorsLayer, Any};
 use serde::{Deserializer, Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use sqlx::types::chrono::NaiveDateTime;
@@ -142,6 +144,11 @@ async fn main(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::Shut
         .await
         .expect("Failed to run migrations");
 
+    let corsl = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_origin(Any)
+        .allow_headers(Any);
+
     let state = DBState { pool };
     let router = Router::new()
         .route("/", get(index))
@@ -153,6 +160,7 @@ async fn main(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::Shut
         .route("/ingredient/all", get(get_all_ingredients))
         .route("/order/add", post(add_order))
         .route("/order/range", post(get_range_orders))
+        .layer(corsl)
         .with_state(state);
 
     Ok(router.into())

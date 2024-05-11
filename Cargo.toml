@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tower-http = { version = "0.5.2", features = ["cors"] }
 axum = "0.7.4"
 chrono = "0.4.38"
 serde = { version = "1.0.188", features = ["derive"] }
