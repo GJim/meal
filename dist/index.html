@@ -3,58 +3,174 @@
     <head>
         <meta charset="UTF-8">
         <title>Meal App</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <style>
+            body {
+                padding-top: 100px; /* Adjust this value based on the height of your navbar */
+                background-color: #f7f7f7;
+            }
+
+            .btn-custom {
+                background-color: #000000;
+                border-color: #000000;
+                color: white;
+            }
+            .btn-custom:hover,
+            .btn-custom:focus,
+            .btn-custom:active {
+                background-color: #000000;
+                border-color: #000000;
+                color: white;
+            }
+
+            .nav-link {
+                background-color: #ffffff;
+                color: #000000;
+                border: none;
+                font-weight: normal;
+            }
+            .nav-link:focus, .nav-link:active {
+                background-color: #ffffff;
+                color: #8c6b28;
+                font-weight: bold;
+            }
+        </style>
     </head>
     <body>
-        <select id="page-select">
-            <option value="order">Order</option>
-            <option value="product">Product</option>
-            <option value="label">Label</option>
-            <option value="ingredient">Ingredient</option>
-            <option value="market">Market</option>
-        </select>
-        <div id="order-page">
-            <form id="order-form">
-                <div id="order-summary"></div>
-                <button type="submit">Submit</button>
-            </form>
-            <div id="order-buttons"></div>
+        <nav class="navbar fixed-top bg-body border-bottom shadow-sm p-3">
+            <button type="button" class="btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop" aria-controls="staticBackdrop">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-justify" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M2 12.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+            </button>
+        </nav>
+        
+        <div class="offcanvas offcanvas-start" data-bs-backdrop="static" tabindex="-1" id="staticBackdrop" aria-labelledby="staticBackdropLabel">
+            <div class="offcanvas-header">
+                <h5 id="staticBackdropLabel" class="font-monospace fs-2">Menu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div>
+                    <div id="page-select" class="d-grid gap-3">
+                        <ul class="navbar-nav justify-content-end flex-grow-1">
+                            <li class="nav-item p-2">
+                                <button class="nav-link" data-page="order">訂餐</button>
+                            </li>
+                            <li class="nav-item p-2">
+                                <button class="nav-link" data-page="product">產品</button>
+                            </li>
+                            <li class="nav-item p-2">
+                                <button class="nav-link" data-page="label">標籤</button>
+                            </li>
+                            <li class="nav-item p-2">
+                                <button class="nav-link" data-page="ingredient">材料</button>
+                            </li>
+                            <li class="nav-item p-2">
+                                <button class="nav-link" data-page="market">銷售</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="product-page" hidden="true">
-            <form id="product-form">
-                <input type="text" id="product-name" placeholder="Product Name">
-                <input type="number" id="product-price" placeholder="Product Price">
-                <button type="submit">Add</button>
-            </form>
-            <div id="product-list"></div>
-        </div>
-        <div id="label-page" hidden="true">
-            <form id="label-form">
-                <input type="text" id="label-name" placeholder="Label Name">
-                <input type="datetime-local" id="label-initial" placeholder="Label Start Time">
-                <input type="datetime-local" id="label-finish" placeholder="Label End Time">
-                <button type="submit">Add</button>
-            </form>
-            <div id="label-list"></div>
-        </div>
-        <div id="ingredient-page" hidden="true">
-            <form id="ingredient-form">
-                <input type="text" id="ingredient-name" placeholder="Ingredient Name">
-                <select id="ingredient-product"></select>
-                <input type="number" id="ingredient-quantity" step="0.01" placeholder="Ingredient Quantity">
-                <input type="text" id="ingredient-unit" placeholder="Ingredient Unit">
-                <button type="submit">Add</button>
-            </form>
-            <div id="ingredient-list"></div>
-        </div>
-        <div id="market-page" hidden="true">
-            <form id="market-form">
-                <input type="datetime-local" id="market-start" placeholder="Market Start Time">
-                <input type="datetime-local" id="market-end" placeholder="Market End Time">
-                <button type="submit">Search</button>
-            </form>
-            <div id="market-list"></div>
+
+        <div class="container">
+            <div id="order-page">
+                <div id="order-buttons" class="row g-3"></div>
+                <form id="order-form" class="mt-4 mb-4">
+                    <!-- <div id="order-summary" class="border border-4 d-grid gap-2 col-6 mx-auto mb-4 rounded-3">
+                    </div> -->
+                    <div class="d-grid gap-2 col-6 mx-auto">
+                        <button class="btn btn-dark" type="submit">Submit</button>
+                    </div>
+                </form>
+            </div>
+            <div id="product-page" hidden="true">
+                <div class="mx-auto p-2 col-6">
+                    <form id="product-form">
+                        <div class="row">
+                            <div class="col">
+                                <input type="text" id="product-name" placeholder="Product Name" class="form-control">
+                            </div>
+                            <div class="col">
+                                <input type="number" id="product-price" placeholder="Product Price" class="form-control">
+                            </div>
+                            <div class="col d-flex justify-content-center">
+                                <button type="submit" class="btn btn-dark">Add</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="product-list" class="mt-5"></div>
+                </div>
+            </div>
+            <div id="label-page" hidden="true">
+                <div class="mx-auto p-2 col-8">
+                    <form id="label-form">
+                        <div class="row">
+                            <div class="col">
+                                <input type="text" id="label-name" placeholder="Label Name" class="form-control">
+                            </div>
+                            <div class="col">
+                                <input type="datetime-local" id="label-initial" placeholder="Label Start Time" class="form-control">
+                            </div>
+                            <div class="col">
+                                <input type="datetime-local" id="label-finish" placeholder="Label End Time" class="form-control">
+                            </div>
+                            <div class="col">
+                                <button type="submit" class="btn btn-dark">Add</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="label-list" class="mt-5"></div>
+                </div>
+            </div>
+            <div id="ingredient-page" hidden="true">
+                <div class="mx-auto p-2 col-10">
+                    <form id="ingredient-form">
+                        <div class="row">
+                            <div class="col">
+                                <input type="text" id="ingredient-name" placeholder="Ingredient Name" class="form-control">
+                            </div>
+                            <div class="col">
+                                <select id="ingredient-product" class="form-select"></select>
+                            </div>
+                            <div class="col">
+                                <input type="number" id="ingredient-quantity" step="0.01" placeholder="Ingredient Quantity" class="form-control">
+                            </div>
+                            <div class="col">
+                                <input type="text" id="ingredient-unit" placeholder="Ingredient Unit" class="form-control">
+                            </div>
+                            <div class="col">
+                                <button type="submit" class="btn btn-dark">Add</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="ingredient-list" class="mt-5"></div>
+                </div>
+            </div>
+            <div id="market-page" hidden="true">
+                <div class="mx-auto p-2 col-8">
+                    <form id="market-form">
+                        <div class="row">
+                            <div class="col">
+                                <input type="datetime-local" id="market-start" placeholder="Market Start Time" class="form-control">
+                            </div>
+                            <div class="col">
+                                <input type="datetime-local" id="market-end" placeholder="Market End Time" class="form-control">
+                            </div>
+                            <div class="col">
+                                <button type="submit" class="btn btn-dark">Search</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="market-list" class="mt-5"></div>
+                </div>
+            </div>
         </div>
     </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
         const timeOffset = 8 * 60 * 60 * 1000;
         let state = {
@@ -83,7 +199,31 @@
                 renderTable(applyMap(state['ingredients'], state['pmap'], 'product', 'name'), "ingredient-list");
 
                 // set element default value
-                document.getElementById("order-buttons").innerHTML = state['products'].map(p => `<div><div>${p.name}</div><button class="product-increment" data-product="${p.no}">+</button><button class="product-decrement" data-product="${p.no}">-</button></div>`).join('');
+                // document.getElementById("order-buttons").innerHTML = state['products'].map(p => `<div><div>${p.name}</div><button class="product-increment" data-product="${p.no}">+</button><button class="product-decrement" data-product="${p.no}">-</button></div>`).join('');
+                document.getElementById("order-buttons").innerHTML = state['products'].map(p =>
+                `
+                    <div class="col-6 col-sm-6 col-md-6 col-lg-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title" style="text-align:center;">${p.name}</h5>
+                                <div class="mt-2">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <button type="button" class="btn w-100 btn-custom product-decrement" data-product="${p.no}">-</button>
+                                        </div>
+                                        <div class="col-2 d-flex align-items-center justify-content-center"">
+                                            <p id="pno-${p.no}" class="mb-0">0</p>
+                                        </div>
+                                        <div class="col-5">
+                                            <button type="button" class="btn w-100 btn-custom product-increment" data-product="${p.no}">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>  
+                        </div>
+                    </div>
+                `).join('');
+                
                 const now = new Date(new Date().getTime() + timeOffset);
                 document.getElementById("label-initial").value = now.toISOString().slice(0, 16);
                 let tomorrow = new Date();
@@ -118,17 +258,22 @@
 
                 // Create table element
                 let table = document.createElement("table");
+                table.className = "table";
 
                 // Create table header row
+                let thead = document.createElement("thead");
                 let headerRow = document.createElement("tr");
+                thead.appendChild(headerRow);
                 keys.forEach(function(key) {
                     let th = document.createElement("th");
                     th.textContent = key;
+                    th.setAttribute("scope", "col");
                     headerRow.appendChild(th);
                 });
-                table.appendChild(headerRow);
+                table.appendChild(thead);
 
                 // Create table rows with data
+                let tbody = document.createElement("tbody");
                 data.forEach(function(item) {
                     let row = document.createElement("tr");
                     keys.forEach(function(key) {
@@ -136,8 +281,9 @@
                         td.textContent = item[key];
                         row.appendChild(td);
                     });
-                    table.appendChild(row);
+                    tbody.appendChild(row);
                 });
+                table.appendChild(tbody);
 
                 // Inject the table into the target element
                 document.getElementById(targetElementId).innerHTML = "";
@@ -154,32 +300,39 @@
                 "market": document.getElementById("market-page")
             };
 
-            selectElement.addEventListener("change", function() {
-                let selectedValue = this.value;
-                for (let page in pages) {
-                    if (page === selectedValue) {
-                        pages[page].removeAttribute("hidden");
-                    } else {
-                        pages[page].setAttribute("hidden", true);
+            document.querySelectorAll('#page-select .nav-link').forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    let selectedPage = this.getAttribute('data-page');
+                    for (let page in pages) {
+                        if (page === selectedPage) {
+                            pages[page].removeAttribute("hidden");
+                        } else {
+                            pages[page].setAttribute("hidden", true);
+                        }
                     }
-                }
+                });
             });
 
             /* Order Management*/
             function summaryOrder(orders) {
-                return Object.keys(orders).map(k => `${state['pmap'][k]['name']} x${orders[k]}`).join(', ');
+                return Object.keys(orders).map(k => `
+                    <div class="mt-2 mb-1 fs-5" style="padding-left: 15px;">${state['pmap'][k]['name']} x${orders[k]}</div>
+                `).join('');
             }
             function incrementProduct(productNo) {
                 state['orders'][productNo] = (state['orders'][productNo] || 0) + 1;
-                document.getElementById("order-summary").innerText = summaryOrder(state['orders']);
+                document.getElementById(`pno-${productNo}`).innerText = state['orders'][productNo];
+                // document.getElementById("order-summary").innerHTML = summaryOrder(state['orders']);
             }
             
             function decrementProduct(productNo) {
                 state['orders'][productNo] = Math.max(0, (state['orders'][productNo] || 0) - 1);
-                if (state['orders'][productNo] === 0) {
-                    delete state['orders'][productNo];
-                }
-                document.getElementById("order-summary").innerText = summaryOrder(state['orders']);
+                // if (state['orders'][productNo] === 0) {
+                //     delete state['orders'][productNo];
+                // }
+                document.getElementById(`pno-${productNo}`).innerText = state['orders'][productNo];
+                // document.getElementById("order-summary").innerHTML = summaryOrder(state['orders']);
             }
 
             function bindOrderButtonEvents() {
